@@ -1,4 +1,4 @@
-function noise_proc, t,arr,filter_size,cutoff
+function noise_proc, t,arr,filter_size,cutoff,plots=plots
 print,t[0]
 n_samples=n_elements(t)
 
@@ -8,40 +8,52 @@ psd=make_psd(t,arr)
 print,t[0]
 n_samples=n_elements(t)
 
-medf=median_filter_psd(psd[*,0],psd[*,2],filter_size)
+medf=median_filter_psd(psd[*,0],psd[*,1],filter_size)
 
-window,1
-!p.multi=[0,0,3]
-plot,medf.data[*,0],medf.data[*,1],/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz'
-oplot,medf.data[*,0],medf.data[*,2],color=50
-oplot,medf.data[where(medf.data[*,3] gt cutoff),0],medf.data[where(medf.data[*,3] gt cutoff),1],color=250,psym=2
+if keyword_set(plots) then begin 
+   window,1
+   !p.multi=[0,0,3]
+   plot,medf.f,medf.psd,/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz',/xlog
+   oplot,medf.f,medf.fpsd,color=50
+   oplot,medf.f[where(medf.npsd gt cutoff)],medf.psd[where(medf.npsd gt cutoff)],color=250,psym=2
 
-plot,medf.data[*,0],medf.data[*,1],/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz'
-oplot,medf.data[where(medf.data[*,3] le cutoff),0],medf.data[where(medf.data[*,3] le cutoff),1],color=50,psym=2
+   
+   plot,medf.f,medf.psd,/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz',/xlog
+   oplot,medf.f[where(medf.npsd le cutoff)],medf.psd[where(medf.npsd le cutoff)],color=50,psym=2
 
 
-plot,medf.data[*,0],medf.data[*,3],yrange=[1e-1,1e2],/ylog,ytitle='Normal Power',xtitle='Freqs Hz'
-!p.multi=0
-;stop
-norm=medf.data[*,3]
-med=medf.data[*,2]
+   plot,medf.f,medf.npsd,yrange=[1e-1,1e2],/ylog,ytitle='Normal Power',xtitle='Freqs Hz',/xlog
+   !p.multi=0
+endif
 
-window,2
+
+norm=medf.npsd
+med=medf.fpsd
+
+
 pdf=make_pdf(norm,n_elements(t))
 
-j=0L
-sum=0.0
-while sum lt .95*n_elements(t)/2 +1 do begin
-sum=sum+pdf[1,j] 
-j++
-endwhile
-print,pdf[0,j]
+;j=0L
+;sum=0.0
+;while sum lt .95*n_elements(t)/2 +1 do begin
+;sum=sum+pdf[1,j] 
+;j++
+;endwhile
+;print,'95% power bin:',pdf[0,j]
 
-plot,pdf[0,*],pdf[1,*],/ylog,xrange=[1e-3,1e2],yrange=[1e-1,1000],/xlog
-;stop
-window,3
-plot,medf.data[*,0],medf.data[*,1],/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz',/xlog,xrange=[(medf.data[1,0]),max(medf.data[*,0])]
-oplot,medf.data[where(medf.data[*,3] gt cutoff),0],medf.data[where(medf.data[*,3] gt cutoff),1],color=50,psym=2
+;while sum lt .997*n_elements(t)/2 +1 do begin
+;sum=sum+pdf[1,j] 
+;j++
+;endwhile
+;print,'99.7% power bin:',pdf[0,j]
+
+;if keyword_set(plots) then begin
+;   window,2
+;   plot,pdf[0,*],pdf[1,*],/ylog,xrange=[1e-3,1e2],yrange=[1e-1,1000],/xlog
+;   window,3
+;   plot,medf.data[*,0],medf.data[*,1],/ylog,xtitle='Freqs Hz',ytitle='PSD V!u2!n/Hz',/xlog,xrange=[(medf.data[1,0]),max(medf.data[*,0])]
+;   oplot,medf.data[where(medf.data[*,3] gt cutoff),0],medf.data[where(medf.data[*,3] gt cutoff),1],color=50,psym=2
+;endif
 
 ;stop
 reverse_norm=norm[1:*];remove dc
@@ -71,14 +83,19 @@ interpol_signal=fft(interpol_sig,1,/double)
 ;stop
 signal=float(signal)
 noise=float(noise)
+
+if keyword_set(plots) then begin
 window,4
 !p.multi=[0,0,3]
 plot,t,arr
 plot,t,signal,color=50
 plot,t,noise,color=250
 !p.multi=0
-;stop
+endif
 n_s=[[noise],[signal],[interpol_signal]]
+print,n_elements(noise_inds)
+print,total(noise*noise)
+print,total(signal*signal)
 return,n_s
 end
 

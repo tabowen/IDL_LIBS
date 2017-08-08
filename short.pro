@@ -21,12 +21,12 @@ int=uint(alog(n)/alog(2))
 
 
 short_arr=replicate(',*',dim_arr)
-short_arr[dim-1]=',0:2.0^int -1.0'
+short_arr[dim-1]=',0:2.0^int'
 compress_str=strjoin([short_arr,']'])
 strput,compress_str,'[',0
 
 string='short_arr=array'+compress_str
 void=execute(string)
-
+short_arr=short_arr[0:-2]
 return,short_arr
 end

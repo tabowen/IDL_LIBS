@@ -1,4 +1,4 @@
-pro plot_psd,psd,d, ylog=ylog,xlog=xlog, oplot=oplot,color=color,psym=psym,linesty=linesty,xrange=xrange,yrange=yrange,wavelet=wavelet, debug=debug,detrend=detrend,nodata=nodata,adjust=adjust,title=title,xtitle=xtitle,ytitle=ytitle,ps=ps,png=png,file=file,ymargin=ymargin,xmargin=xmargin,subtitle=subtitle,thick=thick,ytickformat=ytickformat,smooth_bins=smooth_bins,offset=offset
+pro plot_psd,psd,d, ylog=ylog,xlog=xlog, oplot=oplot,color=color,psym=psym,linesty=linesty,xrange=xrange,yrange=yrange,wavelet=wavelet, debug=debug,detrend=detrend,nodata=nodata,adjust=adjust,title=title,xtitle=xtitle,ytitle=ytitle,ps=ps,png=png,file=file,ymargin=ymargin,xmargin=xmargin,subtitle=subtitle,thick=thick,ytickformat=ytickformat,smooth_bins=smooth_bins,offset=offset,period=period,o1psd=o1psd
 
 psd_buff=psd
 
@@ -13,6 +13,11 @@ endif
 
 if keyword_set(d) then begin
 psd_buff=[[psd_buff[*,0]],[psd_buff[*,d]]]
+endif
+
+
+if keyword_set(o1psd) eq 1 then begin
+   psd_buff[*,1]=sqrt(psd_buff[*,1])
 endif
 
 if keyword_set(adjust) eq 1 then begin
@@ -31,11 +36,15 @@ if keyword_set(smooth_bins) eq 1 then psd_buff[*,1]=smooth(psd_buff[*,1],smooth_
 
 bandwidth=psd_buff[1,0]
 nyquist=max(psd_buff[*,0])
+
+if keyword_Set(period) eq 1 then psd_buff[1:*,0]=1.0/psd_buff[1:*,0]
+
 strcommand='plot,psd_buff[*,0],psd_buff[*,1],xrange=xrange,yrange=yrange' 
 
 
 
-if keyword_set(xrange) eq 0 then xrange=[bandwidth,nyquist]
+if keyword_set(xrange) eq 0 and keyword_set(period) eq 0 then xrange=[bandwidth,nyquist]
+if keyword_set(xrange) eq 0 and keyword_set(period) eq 1 then xrange=[1/nyquist,1/bandwidth]
 if keyword_set(yrange) eq 0 then yrange=[min(psd_buff[*,1]),max(psd_buff[*,1])]
 
 if keyword_set(xlog) then strcommand=strcommand+',/xlog'
